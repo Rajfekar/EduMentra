@@ -1,13 +1,32 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import QuestionViewer from "./QuestionViewer";
+import "katex/dist/katex.min.css";
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 
 interface LatexHtmlProps {
   data: string;
   className?: string;
 }
 
-export default function LatexHtml({ data, className }: LatexHtmlProps) {
-  return <QuestionViewer data={data} className={cn(className)} />;
-}
+const LatexHtml: React.FC<LatexHtmlProps> = ({ data, className }) => {
+  const content = data.replace(/\\n/g, "\n");
+
+  return (
+    <div
+      className={cn(
+        "prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none leading-relaxed",
+        className,
+      )}
+    >
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
+export default LatexHtml;

@@ -1,14 +1,16 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Send, X } from "lucide-react";
+import { ImagePlus, Send, Square, X } from "lucide-react";
 
 type Props = {
   loading: boolean;
-  onSend: (prompt: string, imageDataUrl: string | null) => void;
+  onSend: (prompt: string, imageFile: File | null, imageDataUrl: string | null) => void;
+  onAbort: () => void;
 };
 
-export function ChatComposer({ loading, onSend }: Props) {
+export function ChatComposer({ loading, onSend, onAbort }: Props) {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -16,6 +18,8 @@ export function ChatComposer({ loading, onSend }: Props) {
 
   const handleFile = (file: File | undefined) => {
     if (!file) return;
+    setImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => setImage(reader.result as string);
     reader.readAsDataURL(file);
@@ -25,9 +29,13 @@ export function ChatComposer({ loading, onSend }: Props) {
     e?.preventDefault();
     if (!canSend) return;
 
-    onSend(prompt.trim(), image);
+    onSend(prompt.trim(), imageFile, image);
     setPrompt("");
     setImage(null);
+    setImageFile(null);
+    if (fileRef.current) {
+      fileRef.current.value = "";
+    }
 
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
@@ -43,7 +51,13 @@ export function ChatComposer({ loading, onSend }: Props) {
           <img src={image} alt="attachment" className="h-20 w-20 rounded-lg object-cover" />
           <button
             type="button"
-            onClick={() => setImage(null)}
+            onClick={() => {
+              setImage(null);
+              setImageFile(null);
+              if (fileRef.current) {
+                fileRef.current.value = "";
+              }
+            }}
             className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
             aria-label="Remove image"
           >
@@ -77,17 +91,18 @@ export function ChatComposer({ loading, onSend }: Props) {
               submit();
             }
           }}
-          placeholder="Ask Gemma4 anything..."
+          placeholder="Ask EduMentra anything..."
           rows={1}
           className="max-h-40 min-h-[40px] flex-1 resize-none rounded-xl border border-border bg-white/85 px-4 py-2.5 text-sm text-foreground caret-[var(--brand)] shadow-soft outline-none transition-colors placeholder:text-muted-foreground focus:bg-white focus:ring-2 focus:ring-[var(--brand)]/40"
         />
         <button
-          type="submit"
-          disabled={!canSend}
+          type={loading ? "button" : "submit"}
+          onClick={loading ? onAbort : undefined}
+          disabled={!loading && !canSend}
           className="gradient-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          aria-label="Send"
+          aria-label={loading ? "Stop response" : "Send"}
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {loading ? <Square className="h-4 w-4 fill-current" /> : <Send className="h-4 w-4" />}
         </button>
       </div>
       <p className="mt-2 px-1 text-[11px] text-muted-foreground">

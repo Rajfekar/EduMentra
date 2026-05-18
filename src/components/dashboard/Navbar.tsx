@@ -10,9 +10,8 @@ export function Navbar() {
           </div>
           <div>
             <h1 className="text-base font-semibold leading-tight">
-              <span className="gradient-text">Gemma-4</span>
+              <span className="gradient-text">EduMentra</span>
             </h1>
-            <p className="text-xs text-muted-foreground">project</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -25,7 +24,6 @@ export function Navbar() {
             </div>
             <div className="hidden text-left sm:block">
               <p className="text-xs font-medium leading-tight">Alex Stone</p>
-              <p className="text-[10px] text-muted-foreground">Pro plan</p>
             </div>
           </div>
         </div>

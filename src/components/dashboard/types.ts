@@ -14,3 +14,7 @@ export type AiQuery = {
   imageDataUrl: string | null;
   history: ChatMessage[];
 };
+
+export type ImageAiQuery = AiQuery & {
+  imageFile: File;
+};

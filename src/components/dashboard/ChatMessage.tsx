@@ -1,6 +1,7 @@
 import { Sparkles, User } from "lucide-react";
-import QuestionViewer from "./QuestionViewer";
 import type { ChatMessage as ChatMessageType } from "./types";
+import { QuestionViewer } from "./QuestionViewer";
+import LatexHtml from "./LatexHTML";
 
 export function ChatMessage({ message }: { message: ChatMessageType }) {
   const isUser = message.role === "user";
@@ -43,9 +44,9 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
               <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/60" />
             </div>
           ) : isUser ? (
-            <div className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</div>
+            <QuestionViewer data={message.content} className="text-white" />
           ) : hasContent ? (
-            <QuestionViewer data={message.content} />
+            <LatexHtml data={message.content} className="text-black" />
           ) : (
             <p className="text-sm leading-7 text-muted-foreground">
               No response was generated. Please try again.

@@ -2,7 +2,9 @@
 @source "../src";
 @import "tw-animate-css";
 @import "katex/dist/katex.min.css";
-
+@import "tailwind-scrollbar-hide/v4";
+@plugin "tailwind-scrollbar";
+@plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -69,11 +71,15 @@
   --brand: oklch(0.62 0.19 280);
   --brand-2: oklch(0.7 0.16 220);
   --brand-3: oklch(0.78 0.14 180);
-  --gradient-bg: radial-gradient(1200px 600px at 10% -10%, oklch(0.92 0.08 280 / 0.55), transparent 60%), radial-gradient(900px 500px at 100% 0%, oklch(0.92 0.08 200 / 0.45), transparent 60%), radial-gradient(800px 600px at 50% 100%, oklch(0.94 0.07 320 / 0.4), transparent 60%);
+  --gradient-bg:
+    radial-gradient(1200px 600px at 10% -10%, oklch(0.92 0.08 280 / 0.55), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, oklch(0.92 0.08 200 / 0.45), transparent 60%),
+    radial-gradient(800px 600px at 50% 100%, oklch(0.94 0.07 320 / 0.4), transparent 60%);
   --gradient-brand: linear-gradient(135deg, oklch(0.62 0.19 280), oklch(0.65 0.18 220));
   --glass-bg: color-mix(in oklab, white 65%, transparent);
   --glass-border: color-mix(in oklab, white 50%, transparent);
-  --shadow-glass: 0 10px 30px -10px oklch(0.3 0.05 270 / 0.25), 0 4px 12px -6px oklch(0.3 0.05 270 / 0.15);
+  --shadow-glass:
+    0 10px 30px -10px oklch(0.3 0.05 270 / 0.25), 0 4px 12px -6px oklch(0.3 0.05 270 / 0.15);
   --shadow-soft: 0 1px 2px oklch(0.3 0.05 270 / 0.06), 0 8px 24px -12px oklch(0.3 0.05 270 / 0.18);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -147,8 +153,15 @@
     border-color: var(--color-border);
   }
 
-  html, body {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  html,
+  body {
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Inter,
+      sans-serif;
   }
 
   body {
@@ -177,19 +190,27 @@
     background-clip: text;
     color: transparent;
   }
-  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
 
   .question-viewer .katex-display {
     overflow-x: auto;
     overflow-y: hidden;
     padding: 0.35rem 0.1rem;
   }
-
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-in { animation: fade-in 0.4s ease-out both; }
-
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}

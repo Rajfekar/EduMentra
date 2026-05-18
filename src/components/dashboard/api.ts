@@ -1,15 +1,24 @@
-import type { AiQuery, ChatMessage } from "./types";
+import type { AiQuery, ChatMessage, ImageAiQuery } from "./types";
 
-const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "http://34.72.169.163/gemma4/chat";
+const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "http://35.255.218.194/gemma4/chat";
+const IMAGE_UPLOAD_API_URL =
+  import.meta.env.VITE_GEMMA_IMAGE_UPLOAD_API_URL ??
+  "https://gemma4-api.nxgsols.com/gemma4/chat/image/upload";
+const DEFAULT_IMAGE_PROMPT = "Explain this image";
 
 type AskAiOptions = {
   onChunk?: (chunk: string) => void;
+  signal?: AbortSignal;
 };
 
 type ApiMessage = {
   role: "user" | "assistant";
   content: string;
 };
+
+export function normalizeAiResponseText(text: string): string {
+  return text.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
+}
 
 function toApiMessages(history: ChatMessage[]): ApiMessage[] {
   return history
@@ -22,7 +31,7 @@ function toApiMessages(history: ChatMessage[]): ApiMessage[] {
 
 function extractTextChunk(payload: unknown): string {
   if (typeof payload === "string") {
-    return payload;
+    return normalizeAiResponseText(payload);
   }
 
   if (!payload || typeof payload !== "object") {
@@ -31,28 +40,32 @@ function extractTextChunk(payload: unknown): string {
 
   const record = payload as Record<string, unknown>;
 
-  if (typeof record.response === "string") return record.response;
-  if (typeof record.delta === "string") return record.delta;
-  if (typeof record.content === "string") return record.content;
-  if (typeof record.text === "string") return record.text;
+  if (typeof record.response === "string") return normalizeAiResponseText(record.response);
+  if (typeof record.delta === "string") return normalizeAiResponseText(record.delta);
+  if (typeof record.content === "string") return normalizeAiResponseText(record.content);
+  if (typeof record.text === "string") return normalizeAiResponseText(record.text);
 
   const choices = record.choices;
   if (Array.isArray(choices)) {
     const firstChoice = choices[0];
     if (firstChoice && typeof firstChoice === "object") {
       const choiceRecord = firstChoice as Record<string, unknown>;
-      if (typeof choiceRecord.text === "string") return choiceRecord.text;
+      if (typeof choiceRecord.text === "string") return normalizeAiResponseText(choiceRecord.text);
 
       const delta = choiceRecord.delta;
       if (delta && typeof delta === "object") {
         const deltaRecord = delta as Record<string, unknown>;
-        if (typeof deltaRecord.content === "string") return deltaRecord.content;
+        if (typeof deltaRecord.content === "string") {
+          return normalizeAiResponseText(deltaRecord.content);
+        }
       }
 
       const message = choiceRecord.message;
       if (message && typeof message === "object") {
         const messageRecord = message as Record<string, unknown>;
-        if (typeof messageRecord.content === "string") return messageRecord.content;
+        if (typeof messageRecord.content === "string") {
+          return normalizeAiResponseText(messageRecord.content);
+        }
       }
     }
   }
@@ -74,7 +87,7 @@ function parseSseEvent(eventBlock: string): string {
   try {
     return extractTextChunk(JSON.parse(data));
   } catch {
-    return data;
+    return normalizeAiResponseText(data);
   }
 }
 
@@ -91,11 +104,11 @@ async function readStream(
       try {
         return extractTextChunk(JSON.parse(text));
       } catch {
-        return text;
+        return normalizeAiResponseText(text);
       }
     }
 
-    return text;
+    return normalizeAiResponseText(text);
   }
 
   const reader = response.body.getReader();
@@ -121,8 +134,9 @@ async function readStream(
       }
     } else if (!contentType.includes("application/json")) {
       if (buffer) {
-        fullText += buffer;
-        onChunk?.(buffer);
+        const chunk = normalizeAiResponseText(buffer);
+        fullText += chunk;
+        onChunk?.(chunk);
         buffer = "";
       }
     }
@@ -149,25 +163,27 @@ async function readStream(
     try {
       return extractTextChunk(JSON.parse(buffer));
     } catch {
-      return buffer;
+      return normalizeAiResponseText(buffer);
     }
   }
 
-  fullText += buffer;
-  onChunk?.(buffer);
+  const chunk = normalizeAiResponseText(buffer);
+  fullText += chunk;
+  onChunk?.(chunk);
   return fullText;
 }
 
 export async function askAi(query: AiQuery, options: AskAiOptions = {}): Promise<ChatMessage> {
   const response = await fetch(API_URL, {
     method: "POST",
+    signal: options.signal,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream, text/plain",
     },
     body: JSON.stringify({
       messages: toApiMessages(query.history),
-      stream: true,
+      stream: false,
     }),
   });
 
@@ -179,12 +195,45 @@ export async function askAi(query: AiQuery, options: AskAiOptions = {}): Promise
   const contentType = response.headers.get("content-type") ?? "";
   const content = await readStream(response, contentType, options.onChunk);
 
-  console.log("Gemma API response:", content);
+  // console.log("Gemma API response:", content);
 
   return {
     id: crypto.randomUUID(),
     role: "assistant",
     content: content,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+export async function askAiWithImage(
+  query: ImageAiQuery,
+  options: AskAiOptions = {},
+): Promise<ChatMessage> {
+  const formData = new FormData();
+  formData.append("image", query.imageFile);
+  formData.append("prompt", query.prompt.trim() || DEFAULT_IMAGE_PROMPT);
+
+  const response = await fetch(IMAGE_UPLOAD_API_URL, {
+    method: "POST",
+    signal: options.signal,
+    headers: {
+      Accept: "application/json, text/plain",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "");
+    throw new Error(errorBody || `Image chat request failed with status ${response.status}`);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const content = await readStream(response, contentType, options.onChunk);
+
+  return {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content,
     createdAt: new Date().toISOString(),
   };
 }

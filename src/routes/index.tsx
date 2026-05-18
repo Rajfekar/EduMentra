@@ -4,18 +4,18 @@ import { Sparkles } from "lucide-react";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { ChatMessage } from "@/components/dashboard/ChatMessage";
 import { ChatComposer } from "@/components/dashboard/ChatComposer";
-import { askAi } from "@/components/dashboard/api";
+import { askAi, askAiWithImage } from "@/components/dashboard/api";
 import type { ChatMessage as ChatMessageType } from "@/components/dashboard/types";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
   head: () => ({
     meta: [
-      { title: "Gemma4 - AI Study Chat" },
+      { title: "EduMentra  - AI Study Chat" },
       {
         name: "description",
         content:
-          "Gemma4 hackathon project: a chat-based AI study assistant. Ask questions, share images, get instant answers.",
+          "EduMentra  hackathon project: a chat-based AI study assistant. Ask questions, share images, get instant answers.",
       },
     ],
   }),
@@ -31,17 +31,35 @@ const SUGGESTIONS = [
 function Dashboard() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [latestQuestionId, setLatestQuestionId] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+    const scroller = scrollRef.current;
+    if (!scroller || !latestQuestionId) return;
 
-  const handleSend = async (prompt: string, imageDataUrl: string | null) => {
+    const target = scroller.querySelector(`[data-message-id="${latestQuestionId}"]`);
+    if (!(target instanceof HTMLElement)) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const top = scroller.scrollTop + targetRect.top - scrollerRect.top;
+
+    scroller.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+  }, [latestQuestionId, messages.length]);
+
+  const handleSend = async (
+    prompt: string,
+    imageFile: File | null,
+    imageDataUrl: string | null,
+  ) => {
+    abortControllerRef.current?.abort();
+
     const userMsg: ChatMessageType = {
       id: crypto.randomUUID(),
       role: "user",
-      content: prompt,
+      content: prompt || (imageFile ? "Explain this image" : ""),
       imageDataUrl,
       createdAt: new Date().toISOString(),
     };
@@ -55,28 +73,23 @@ function Dashboard() {
     };
     const next = [...messages, userMsg, assistantMsg];
 
+    setLatestQuestionId(userMsg.id);
     setMessages(next);
     setLoading(true);
 
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
-      const reply = await askAi(
-        { prompt, imageDataUrl, history: [...messages, userMsg] },
-        {
-          onChunk: (chunk) => {
-            setMessages((current) =>
-              current.map((message) =>
-                message.id === assistantId
-                  ? {
-                      ...message,
-                      content: message.content + chunk,
-                      streaming: false,
-                    }
-                  : message,
-              ),
-            );
-          },
-        },
-      );
+      const reply = imageFile
+        ? await askAiWithImage(
+            { prompt, imageFile, imageDataUrl, history: [...messages, userMsg] },
+            { signal: abortController.signal },
+          )
+        : await askAi(
+            { prompt, imageDataUrl, history: [...messages, userMsg] },
+            { signal: abortController.signal },
+          );
 
       setMessages((current) =>
         current.map((message) =>
@@ -90,6 +103,21 @@ function Dashboard() {
         ),
       );
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setMessages((current) =>
+          current.map((entry) =>
+            entry.id === assistantId
+              ? {
+                  ...entry,
+                  content: entry.content || "Response stopped.",
+                  streaming: false,
+                }
+              : entry,
+          ),
+        );
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : "Something went wrong while calling the chat API.";
       const cleanedMessage = message.replace(/\s+/g, " ").trim();
@@ -112,8 +140,15 @@ function Dashboard() {
         ),
       );
     } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
       setLoading(false);
     }
+  };
+
+  const handleAbort = () => {
+    abortControllerRef.current?.abort();
   };
 
   const isEmpty = messages.length === 0;
@@ -130,7 +165,7 @@ function Dashboard() {
                 <Sparkles className="h-7 w-7" />
               </div>
               <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                <span className="gradient-text">Gemma-4</span>
+                <span className="gradient-text">EduMentra</span>
               </h1>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
                 Ask anything - type a question or attach an image to get started.
@@ -139,7 +174,7 @@ function Dashboard() {
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
-                    onClick={() => handleSend(s, null)}
+                    onClick={() => handleSend(s, null, null)}
                     className="glass rounded-xl px-4 py-3 text-left text-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     {s}
@@ -150,14 +185,16 @@ function Dashboard() {
           ) : (
             <div className="space-y-5">
               {messages.map((m) => (
-                <ChatMessage key={m.id} message={m} />
+                <div key={m.id} data-message-id={m.id}>
+                  <ChatMessage message={m} />
+                </div>
               ))}
             </div>
           )}
         </div>
 
         <div className="sticky bottom-0 pb-2 pt-2">
-          <ChatComposer loading={loading} onSend={handleSend} />
+          <ChatComposer loading={loading} onSend={handleSend} onAbort={handleAbort} />
         </div>
       </main>
     </div>
