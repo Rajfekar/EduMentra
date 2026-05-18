@@ -1,5 +1,3 @@
-Here is a clean and professional `README.md` for your **EduMentra AI Frontend Repository**.
-
 ````md
 # 🚀 EduMentra AI Frontend
 
