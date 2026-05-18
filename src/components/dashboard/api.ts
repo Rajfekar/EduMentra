@@ -1,9 +1,7 @@
 import type { AiQuery, ChatMessage, ImageAiQuery } from "./types";
 
-const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "http://35.255.218.194/gemma4/chat";
-const IMAGE_UPLOAD_API_URL =
-  import.meta.env.VITE_GEMMA_IMAGE_UPLOAD_API_URL ??
-  "https://gemma4-api.nxgsols.com/gemma4/chat/image/upload";
+const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "";
+const IMAGE_UPLOAD_API_URL = import.meta.env.VITE_GEMMA_IMAGE_UPLOAD_API_URL ?? "";
 const DEFAULT_IMAGE_PROMPT = "Explain this image";
 
 type AskAiOptions = {
@@ -184,6 +182,7 @@ export async function askAi(query: AiQuery, options: AskAiOptions = {}): Promise
     body: JSON.stringify({
       messages: toApiMessages(query.history),
       stream: false,
+      max_new_tokens: 4096,
     }),
   });
 
@@ -212,6 +211,7 @@ export async function askAiWithImage(
   const formData = new FormData();
   formData.append("image", query.imageFile);
   formData.append("prompt", query.prompt.trim() || DEFAULT_IMAGE_PROMPT);
+  formData.append("max_new_tokens", "4096");
 
   const response = await fetch(IMAGE_UPLOAD_API_URL, {
     method: "POST",
