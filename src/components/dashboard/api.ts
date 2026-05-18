@@ -1,7 +1,9 @@
 import type { AiQuery, ChatMessage, ImageAiQuery } from "./types";
 
-const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "";
-const IMAGE_UPLOAD_API_URL = import.meta.env.VITE_GEMMA_IMAGE_UPLOAD_API_URL ?? "";
+const API_URL = import.meta.env.VITE_GEMMA_API_URL ?? "http://34.72.169.163/gemma4/chat";
+const IMAGE_UPLOAD_API_URL =
+  import.meta.env.VITE_GEMMA_IMAGE_UPLOAD_API_URL ??
+  "https://gemma4-api.nxgsols.com/gemma4/chat/image/upload";
 const DEFAULT_IMAGE_PROMPT = "Explain this image";
 
 type AskAiOptions = {
