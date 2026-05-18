@@ -1,50 +1,107 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+Here is a clean and professional `README.md` for your **EduMentra AI Frontend Repository**.
 
-# dependencies
+````md
+# 🚀 EduMentra AI Frontend
 
-/node*modules
-/.pnp
-.pnp.*
-.yarn/\_
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+AI-powered educational platform built using React for personalized and adaptive learning experiences powered by Gemma 4.
 
-# testing
+---
 
-/coverage
+## 📌 About Project
 
-# next.js
+EduMentra AI is a multimodal educational platform designed to help students quickly understand topics through intelligent AI-generated explanations. The platform supports text and image-based educational queries and provides detailed learning assistance using a fine-tuned Gemma 4 model trained on custom educational datasets.
 
-/.next/
-/out/
+This frontend application provides:
 
-# production
+- Modern educational dashboard
+- AI-powered learning interface
+- Question upload system
+- Topic explanation interface
+- Student-friendly UI experience
 
-/build
+---
 
-# misc
+## ✨ Features
 
-.DS_Store
-\*.pem
+- 📚 AI-powered educational assistance
+- 🧠 Detailed topic explanations
+- 🖼️ Image and text-based question support
+- ⚡ Fast and responsive UI
+- 📊 Student-friendly learning interface
+- 🎯 Personalized educational experience
 
-# debug
+---
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+## 🛠️ Tech Stack
 
-# env files (can opt-in for committing if needed)
+- React
+- JavaScript
+- Tailwind CSS
+- Axios
+- Vite
 
-.env\*
+---
 
-# vercel
+## 📂 Project Setup
 
-.vercel
+Clone the repository:
 
-# typescript
+```bash
+git clone <your-repository-url>
+```
+````
 
-\*.tsbuildinfo
-next-env.d.ts
+Move into project directory:
+
+```bash
+cd project-name
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run development server:
+
+```bash
+npm run dev
+```
+
+---
+
+## 💻 Development Server
+
+The application will start on:
+
+```bash
+http://localhost:5173
+```
+
+---
+
+## 📸 Demo
+
+EduMentra AI demonstrates:
+
+- Educational question understanding
+- AI-generated topic explanations
+- Personalized educational assistance
+- Interactive learning workflows
+
+---
+
+## 🌍 Vision
+
+EduMentra AI aims to make intelligent educational assistance accessible for students through scalable AI-powered learning systems using Gemma 4.
+
+---
+
+## 📄 License
+
+This project is developed for educational and hackathon purposes.
+
+```
+
+```
